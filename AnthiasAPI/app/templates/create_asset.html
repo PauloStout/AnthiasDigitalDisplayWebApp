@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Create Asset</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        h1 {
+            background-color: #003366;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        form {
+            max-width: 800px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        fieldset {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+
+        legend {
+            font-weight: bold;
+            padding: 0 8px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        input[type="number"],
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        /* Keep disabled styling for other disabled inputs (if used elsewhere) */
+        input:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Readonly inputs should look like normal inputs (no grey) */
+        input[readonly] {
+            background-color: white;
+            color: inherit;
+            cursor: default;
+        }
+
+        p {
+            text-align: center;
+            font-style: italic;
+            color: #777;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        /* Back to Home button */
+        .back-button {
+            background-color: #0066cc;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background-color: #0055aa;
+        }
+
+        /* Notification styles */
+        #notification {
+            display: none;
+            padding: 15px;
+            margin: 20px auto;
+            border-radius: 5px;
+            max-width: 800px;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        #notification.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        #notification.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .device-item, .infinite-option {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            gap: 3px;
+        }
+
+        .device-item:nth-child(odd) {
+            background-color: #f8f9fa;
+        }
+
+        .infinite-option label {
+            display: inline;
+            font-weight: normal;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Create Asset</h1>
+
+    <!-- Notification banner -->
+    <div id="notification"></div>
+
+    <form id="assetForm" action="/create_asset" method="post" enctype="multipart/form-data">
+
+        <!-- Back to Home button -->
+        <button type="button" class="back-button" onclick="window.location.href='/'">← Back to Home</button>
+
+        <fieldset>
+            <legend>Asset Source</legend>
+            <div>
+                <label for="file">Upload File:</label>
+                <input type="file" name="file" id="file">
+            </div>
+            <p>— OR —</p>
+            <div>
+                <label for="asset_url">Asset URL:</label>
+                <input type="text" name="asset_url" id="asset_url" placeholder="https://example.com/asset">
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Asset Metadata</legend>
+            <div>
+                <label for="name">Asset Name:</label>
+                <input type="text" name="name" id="name" required>
+            </div>
+            <div>
+                <label for="start_date">Start Date:</label>
+                <input type="datetime-local" name="start_date" id="start_date" required>
+            </div>
+            <div>
+                <label for="end_date">End Date:</label>
+                <input type="datetime-local" name="end_date" id="end_date" required>
+            </div>
+            <div class="infinite-option">
+                <input type="checkbox" id="infinite_end" name="infinite_end">
+                <label for="infinite_end">Infinite / No Expiry</label>
+            </div>
+            <div>
+                <label for="duration">Duration (seconds):</label>
+                <input type="number" name="duration" id="duration" min="1">
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Select Devices</legend>
+            {% for device in devices %}
+            <div class="device-item">
+                <input type="checkbox" name="selected_ips" value="{{ device.ip }}" id="device_{{ loop.index }}">
+                <label for="device_{{ loop.index }}">{{ device.label }} ({{ device.ip }})</label>
+            </div>
+            {% endfor %}
+        </fieldset>
+
+        <button type="submit">Create Asset</button>
+    </form>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function setDefaultDateTime(id) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+                const hours = String(now.getHours()).padStart(2, "0");
+                const minutes = String(now.getMinutes()).padStart(2, "0");
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
+            }
+
+            setDefaultDateTime("start_date");
+            setDefaultDateTime("end_date");
+
+            const form = document.getElementById("assetForm");
+            const notification = document.getElementById("notification");
+            const fileInput = document.getElementById("file");
+            const durationInput = document.getElementById("duration");
+            const endDateInput = document.getElementById("end_date");
+            const infiniteEndCheckbox = document.getElementById("infinite_end");
+
+            // --- Handle file selection (images/videos only) and duration enable/disable ---
+            fileInput.addEventListener("change", function () {
+                const allowedTypes = ["image/", "video/"];
+                notification.style.display = "none"; // hide previous notifications
+
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const type = file.type || "";
+
+                    // Reject if not image or video
+                    if (!allowedTypes.some(prefix => type.startsWith(prefix))) {
+                        notification.className = "error";
+                        notification.innerText = "❌ Only photo or video files are allowed!";
+                        notification.style.display = "block";
+                        fileInput.value = ""; // clear invalid file
+                        durationInput.disabled = false; // reset duration if needed
+                        return;
+                    }
+
+                    // Disable duration if video file selected (keeps visual style)
+                    if (type.startsWith("video/")) {
+                        durationInput.disabled = true;
+                        durationInput.value = ""; // clear value if set
+                    } else {
+                        durationInput.disabled = false;
+                    }
+                } else {
+                    durationInput.disabled = false;
+                }
+            });
+
+            // --- Single submit handler for creating asset ---
+            form.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                try {
+                    const response = await fetch("/create_asset", {
+                        method: "POST",
+                        body: formData
+                    });
+                    const result = await response.json();
+                    let failedDevices = [];
+
+                    if (result.error) {
+                        failedDevices.push("All devices: " + result.error);
+                    } else {
+                        for (const ip in result) {
+                            if (result[ip].error) {
+                                failedDevices.push(`${ip} (${result[ip].error})`);
+                            }
+                        }
+                    }
+
+                    if (failedDevices.length > 0) {
+                        notification.className = "error";
+                        notification.innerHTML = "❌ Error creating asset on:<br>• " + failedDevices.join("<br>• ");
+                    } else {
+                        notification.className = "success";
+                        notification.innerHTML = "✅ Asset created successfully on all devices.";
+                        form.reset();
+                        durationInput.disabled = false; // reset state after submit
+                        // reset end_date default after a reset
+                        setDefaultDateTime("end_date");
+                    }
+                    notification.style.display = "block";
+                } catch (err) {
+                    notification.className = "error";
+                    notification.innerHTML = "❌ Network error: " + err.message;
+                    notification.style.display = "block";
+                }
+            });
+
+            // --- Infinite checkbox handler ---
+            infiniteEndCheckbox.addEventListener("change", function () {
+                if (this.checked) {
+                    // set to "infinite" date but don't disable (use readonly so it doesn't grey out)
+                    if (endDateInput) {
+                        endDateInput.value = "9999-12-31T23:59";
+                        endDateInput.readOnly = true; // prevents editing but keeps normal styling
+                        // optionally add a CSS class to visually indicate infinite (uncomment to use)
+                        // endDateInput.classList.add('infinite');
+                    }
+                } else {
+                    // re-enable for editing and reset default
+                    if (endDateInput) {
+                        endDateInput.readOnly = false;
+                        setDefaultDateTime("end_date");
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

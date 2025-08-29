@@ -1,0 +1,70 @@
+<!-- app/templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Anthias Digital Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        nav {
+            margin: 20px 0;
+        }
+        nav a {
+            background-color: #0066cc;
+            color: white;
+            padding: 10px 18px;
+            margin: 5px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+        nav a:hover {
+            background-color: #004c99;
+        }
+        main {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Anthias Digital Display</h1>
+    </header>
+
+    <main>
+        <nav>
+            <a href="/create_asset_page">Create Asset</a>
+            <a href="/view_assets">View Assets</a>
+            <a href="/anthias_status">Plasma Status</a>
+        </nav>
+        <p>Welcome to the Anthias Digital Display system.
+        Use the links above to create new assets or manage existing ones.</p>
+    </main>
+</body>
+</html>

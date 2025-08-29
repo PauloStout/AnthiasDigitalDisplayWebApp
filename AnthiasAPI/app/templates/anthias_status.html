@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="10">
+    <title>Anthias Status</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align items towards the top */
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+        }
+        .container {
+            text-align: center;
+            width: 80%;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #333;
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 55px;
+            text-align: left;
+            margin-left: 145px;
+        }
+        .status-circle {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+        }
+        .online {
+            background-color: #92D050;
+        }
+        .offline {
+            background-color: #ff1b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Anthias Status</h1>
+        <table>
+            <tbody>
+                {% for result in results %}
+                    <tr>
+                        <td>
+                            <span class="status-circle {% if result.name == 'Offline' %}offline{% else %}online{% endif %}"></span>
+                        </td>
+                        <td>{{ result.label }}</td>
+                        <td>{{ result.name }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

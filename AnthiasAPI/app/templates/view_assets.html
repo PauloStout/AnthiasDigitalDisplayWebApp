@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>View Assets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        main {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        a.back-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a.back-link:hover {
+            text-decoration: underline;
+        }
+        h2 {
+            color: #003366;
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 10px;
+        }
+        li {
+            background: #f9f9f9;
+            margin-bottom: 6px;
+            padding: 8px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        li strong {
+            margin-right: 5px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        .status-dot.active {
+            background-color: green;
+        }
+        .status-dot.inactive {
+            background-color: red;
+        }
+        .checkbox-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: #eef2f5;
+            border-radius: 5px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #ff2929;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #d12424;
+        }
+
+        /* Back to Home button */
+        .back-button {
+            background-color: #0066cc;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background-color: #0055aa;
+        }
+    </style>
+
+    <script>
+        function toggleSelectAll(deviceId, masterCheckbox) {
+            var checkboxes = document.querySelectorAll('.asset-checkbox-' + deviceId);
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+        }
+
+        function toggleSelectAllGlobal(globalCheckbox) {
+            var checkboxes = document.querySelectorAll('input[type="checkbox"].asset-checkbox');
+            checkboxes.forEach(cb => cb.checked = globalCheckbox.checked);
+            // If global is checked, uncheck active/inactive masters for clarity
+            if (globalCheckbox.checked) {
+                var a = document.getElementById('select-all-active');
+                var i = document.getElementById('select-all-inactive');
+                if (a) a.checked = false;
+                if (i) i.checked = false;
+            }
+        }
+
+        function toggleSelectAllInactive(inactiveCheckbox) {
+            // Select all checkboxes that have data-active="false"
+            var inactiveCheckboxes = document.querySelectorAll('input[type="checkbox"].asset-checkbox[data-active="false"]');
+            inactiveCheckboxes.forEach(cb => cb.checked = inactiveCheckbox.checked);
+
+            // Make inactive master mutually exclusive with active master
+            if (inactiveCheckbox.checked) {
+                var activeMaster = document.getElementById('select-all-active');
+                if (activeMaster) activeMaster.checked = false;
+            }
+        }
+
+        function toggleSelectAllActive(activeCheckbox) {
+            // Select all checkboxes that have data-active="true"
+            var activeCheckboxes = document.querySelectorAll('input[type="checkbox"].asset-checkbox[data-active="true"]');
+            activeCheckboxes.forEach(cb => cb.checked = activeCheckbox.checked);
+
+            // Make active master mutually exclusive with inactive master
+            if (activeCheckbox.checked) {
+                var inactiveMaster = document.getElementById('select-all-inactive');
+                if (inactiveMaster) inactiveMaster.checked = false;
+            }
+        }
+
+        // Confirmation helper used on each button (keeps logic simple: one prompt per click)
+        function confirmAction(message) {
+            return confirm(message);
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>View Assets</h1>
+    </header>
+    <main>
+        <!-- Back to Home button -->
+        <div style="max-width: 800px; margin: 20px auto;">
+            <button class="back-button" type="button" onclick="window.location.href='/'">
+                ← Back to Home
+            </button>
+        </div>
+
+        <!-- Removed onsubmit confirm to avoid double prompts; buttons keep per-action confirm -->
+        <form id="delete-assets-form" action="/delete_assets" method="post">
+            {% for ip, asset_info in assets.items() %}
+                <div id="device-{{ ip|replace('.', '-') }}">
+                    <h2>Device: <strong>{{ asset_info.label }}</strong> ({{ ip }})</h2>
+
+                    {% if asset_info.error %}
+                        <p style="color:red;">Error: {{ asset_info.error }}</p>
+                    {% elif not asset_info.assets or asset_info.assets|length == 0 %}
+                        <p>No assets found.</p>
+                    {% else %}
+                        <ul>
+                            {% for asset in asset_info.assets %}
+                                <li>
+                                    <input type="checkbox"
+                                           class="asset-checkbox asset-checkbox-{{ ip|replace('.', '-') }}"
+                                           name="selected_assets"
+                                           value="{{ ip }}|{{ asset.asset_id }}"
+                                           data-active="{{ 'true' if asset.is_active else 'false' }}">
+                                    <strong>{{ asset.name }}</strong>
+                                    {% if asset.is_active %}
+                                        <span class="status-dot active"></span>
+                                    {% else %}
+                                        <span class="status-dot inactive"></span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <hr>
+                </div>
+            {% endfor %}
+
+            <div class="checkbox-actions">
+                <label>
+                    <input id="select-all-global" type="checkbox" onclick="toggleSelectAllGlobal(this)">
+                    Select All Assets
+                </label>
+                <label>
+                    <input id="select-all-inactive" type="checkbox" onclick="toggleSelectAllInactive(this)">
+                    Select All Inactive Assets
+                </label>
+                <label>
+                    <input id="select-all-active" type="checkbox" onclick="toggleSelectAllActive(this)">
+                    Select All Active Assets
+                </label>
+            </div>
+
+            <div class="action-row" style="display:flex; gap:10px; margin-top:10px;">
+                <button type="submit"
+                        formaction="/set_assets_active"
+                        class="btn-activate"
+                        onclick="return confirmAction('Are you sure you want to set the selected assets ACTIVE?')"
+                        style="flex:1; padding:10px; background:#28a745; color:white; border-radius:6px; border:none; cursor:pointer;">
+                    Set Selected Active
+                </button>
+
+                <button type="submit"
+                        formaction="/set_assets_inactive"
+                        class="btn-deactivate"
+                        onclick="return confirmAction('Are you sure you want to set the selected assets INACTIVE?')"
+                        style="flex:1; padding:10px; background:#6c757d; color:white; border-radius:6px; border:none; cursor:pointer;">
+                    Set Selected Inactive
+                </button>
+
+                <button type="submit"
+                        formaction="/delete_assets"
+                        class="btn-delete"
+                        onclick="return confirmAction('⚠️ Are you sure you want to DELETE the selected assets? This cannot be undone!')"
+                        style="flex:1; padding:10px; background:#ff2929; color:white; border-radius:6px; border:none; cursor:pointer;">
+                    Delete Selected Assets
+                </button>
+
+            </div>
+
+        </form>
+
+    </main>
+</body>
+</html>
